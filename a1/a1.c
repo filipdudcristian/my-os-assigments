@@ -475,7 +475,7 @@ int SF(char *path)
 
         } while (c != NULL);
         // printf("%s\n",section_content);
-        // free(section_content);
+        free(section_content);
     }
     close(fd);
     return -1;
