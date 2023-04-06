@@ -213,11 +213,11 @@ int parse_SF_file(char *path)
 
 int extract_from_SF(char *path, int section, int line)
 {
-    off_t fd;
+    off_t fd=0;
     fd = open(path, O_RDONLY);
 
     lseek(fd, -1, SEEK_END);
-    char magic;
+    char magic=0;
     int header_size = 0, version = 0, no_of_sections = 0;
 
     if (read(fd, &magic, 1) != 1 || magic != 'd')
@@ -265,110 +265,114 @@ int extract_from_SF(char *path, int section, int line)
         read(fd, &(sections[i].sect_size), 4);
     }
 
-    lseek(fd, sections[section].sect_offset, SEEK_SET);
 
-    int nrLines = 1;
-    char c = 0;
-    for (int i = 0; i < sections[section].sect_size; i++)
-    {
-
-        if (read(fd, &c, 1) != 1)
-        {
-            perror("Eroare la citire");
-            return -1;
-        }
-
-        if (c == '\x0A')
-        {
-            nrLines++;
-        }
-    }
-
-    // char *section_content, *pos;
-
-    // nrLines = 1;
-    // lseek(fd, sections[section-1].sect_offset, SEEK_SET);
-    // section_content = (char *)malloc(sizeof(char) * sections[section-1].sect_size);
-    // read(fd, section_content, sections[section-1].sect_size);
-    // pos = section_content;
-    // do
+    // ----------------------------------------------------COD NEEFICIENT, DAR MERGE----------------------------------------
+    // lseek(fd, sections[section].sect_offset, SEEK_SET);
+    // int nrLines = 1;
+    // char c = 0;
+    // for (int i = 0; i < sections[section].sect_size; i++)
     // {
-    //     pos = strchr(pos, '\x0A');
-
-    //     if (pos != NULL)
+    //     if (read(fd, &c, 1) != 1)
     //     {
-    //         pos++;
-    //         // printf("%s\n",c);
+    //         perror("Eroare la citire");
+    //         return -1;
+    //     }
+    //     if (c == '\x0A')
+    //     {
     //         nrLines++;
     //     }
+    // }
+    // lseek(fd, sections[section].sect_offset, SEEK_SET);
+    // int startPrinting = 0;
+    //  for (int i = 0; i < sections[section].sect_size; i++)
+    //  {
+    //     if (read(fd, &c, 1) != 1)
+    //     {
+    //         perror("Eroare la citire");
+    //         return -1;
+    //     }
+    //     if (startPrinting == 1)
+    //         printf("%c", c);
+    //     if (c == '\x0A')
+    //     {
+    //         nrLines--;
+    //         if (nrLines == line)
+    //         {
+    //             printf("SUCCESS\n");
+    //             startPrinting = 1;
+    //         }
+    //         else
+    //             startPrinting = 0;
+    //     }
+    // }
+    //-------------------------------------------------------------------------------------------------------------------------
 
-    // } while (pos != NULL);
-    // printf("Numar de linii %d\n",nrLines);
-    // printf("%s\n",section_content);
-    // free(section_content);
+
+    //-------------------------------------------------------------COD EFICIENT BUT DOESNT WORK----------------------------------------------------
+    char *section_content=NULL, *pos=NULL;
+
+    int nrLines = 1;
+    char c=0;
+    lseek(fd, sections[section].sect_offset, SEEK_SET);
+    section_content = (char *)malloc(sizeof(char) * sections[section].sect_size);
+    read(fd, section_content, sections[section].sect_size);
+    pos = section_content;
+    do
+    {
+        pos = strchr(pos, '\x0A');
+
+        if (pos != NULL)
+        {
+            pos++;
+            //printf("%c\n",c);
+            nrLines++;
+        }
+
+    } while (pos != NULL);
+   // printf("Numar de linii %d\n",nrLines);
+   // printf("%s\n",section_content);
+    //free(section_content);
+    
+    
 
     lseek(fd, sections[section].sect_offset, SEEK_SET);
+   // section_content = (char *)realloc(section_content,sizeof(char) * sections[section].sect_size);
+   // read(fd, section_content, sections[section].sect_size);
+   // lseek(fd, -sections[section].sect_size, SEEK_CUR);--- de ce dumnezo mai faceam astea inca o data
+    pos = section_content;
+    do{
+        pos = strchr(pos, '\x0A');
 
-    int startPrinting = 0;
-     for (int i = 0; i < sections[section].sect_size; i++)
-     {
-
-        if (read(fd, &c, 1) != 1)
+        if (pos != NULL)
         {
-            perror("Eroare la citire");
-            return -1;
-        }
-
-        if (startPrinting == 1)
-            printf("%c", c);
-        if (c == '\x0A')
-        {
+            pos++;
             nrLines--;
-            if (nrLines == line)
-            {
-                printf("SUCCESS\n");
-                startPrinting = 1;
-            }
-            else
-                startPrinting = 0;
-        }
-    }
-
-//     lseek(fd, sections[section-1].sect_offset, SEEK_SET);
-//     section_content = (char *)realloc(section_content,sizeof(char) * sections[section-1].sect_size);
-//     read(fd, section_content, sections[section-1].sect_size);
-//     lseek(fd, -sections[section-1].sect_size, SEEK_CUR);
-//     pos = section_content;
-//     do{
-//         pos = strchr(pos, '\x0A');
-
-//         if (pos != NULL)
-//         {
-//             pos++;
-//             nrLines--;
             
-//         }
-//         if (nrLines == line)
-//         {
-//             printf("Numar de linii %d\n",nrLines);
-//             printf("SUCCESS\n");
-//             c = 0;
-//             //int i=0;
-//             lseek(fd, pos-section_content, SEEK_CUR);
-//             while (c != '\x0A')
-//             //while(i <= sections[section-1].sect_size)
-//             {
-//                 if (read(fd, &c, 1) != 1)
-//                 {
-//                     perror("Eroare la citire");
-//                     return -1;
-//                 }
-//                 printf("%c", c);
-//                 //i++;
-//             }
-//             return 1;
-//        }
-//    } while (pos != NULL);
+        }
+        if (nrLines == line)
+        {
+           // printf("Numar de linii %d\n",nrLines);
+            printf("SUCCESS\n");
+            c = 0;
+            //int i=0;
+            lseek(fd, pos-section_content, SEEK_CUR);
+            while (c != '\x0A')
+            //while(i <= sections[section-1].sect_size)
+            {
+                if (read(fd, &c, 1) != 1)
+                {
+                    perror("Eroare la citire");
+                    return -1;
+                }
+                printf("%c", c);
+                //i++;
+            }
+       }
+   } while (pos != NULL);
+
+    free(section_content);
+
+//-----------------------------------------------------------------------------------------------------------------------------
 
     close(fd);
     return -1;
@@ -475,7 +479,7 @@ int SF(char *path)
 
         } while (c != NULL);
         // printf("%s\n",section_content);
-        // free(section_content);
+        free(section_content);
     }
     close(fd);
     return -1;
@@ -602,6 +606,7 @@ int main(int argc, char **argv)
                 {
                     findall = 1;
                 }
+                //free(name_filtration);
                 free(temp_argv);
             }
         }
