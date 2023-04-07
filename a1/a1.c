@@ -211,11 +211,12 @@ int parse_SF_file(char *path)
 
 int extract_from_SF(char *path, int section, int line)
 {
+   
     off_t fd = 0;
     fd = open(path, O_RDONLY);
     if (fd == -1)
     {
-        printf("ERROR\ninvalid file\n");
+        printf("ERROR\ninvalid file path\n");
         return -1;
     }
 
@@ -225,7 +226,7 @@ int extract_from_SF(char *path, int section, int line)
 
     if (read(fd, &magic, 1) != 1 || magic != 'd')
     {
-        printf("ERROR\ninvalid file\n");
+        printf("ERROR\ninvalid file magic\n");
         close(fd);
         return -1;
     }
@@ -238,22 +239,22 @@ int extract_from_SF(char *path, int section, int line)
     read(fd, &version, 2);
     if (version < 41 || version > 151)
     {
-        printf("ERROR\ninvalid file\n");
-        close(fd);
+        printf("ERROR\ninvalid file version\n");
+        close(fd); 
         return -1;
     }
 
     read(fd, &no_of_sections, 1);
     if (no_of_sections < 5 || no_of_sections > 19)
     {
-        printf("ERROR\nwinvalid file\n");
+        printf("ERROR\nwinvalid file no of sections\n");
         close(fd);
         return -1;
     }
 
     if (section > no_of_sections)
     {
-        printf("ERROR\ninvalid section");
+        printf("ERROR\ninvalid section number");
         close(fd);
         return -1;
     }
@@ -270,7 +271,7 @@ int extract_from_SF(char *path, int section, int line)
         read(fd, &(sections[i].sect_type), 2);
         if (sections[i].sect_type != 52 && sections[i].sect_type != 41 && sections[i].sect_type != 89)
         {
-            printf("ERROR\ninvalid file\n");
+            printf("ERROR\ninvalid file section type\n");
             close(fd);
             return -1;
         }
@@ -297,8 +298,8 @@ int extract_from_SF(char *path, int section, int line)
         }
 
     } while (pos != NULL);
-    // printf("Numar de linii %d\n",nrLines);
-    // printf("%s\n",section_content);
+    //printf("Numar de linii %d\n",nrLines);
+    //printf("%s\n",section_content);
     // free(section_content);
     if (line > nrLines)
     {
@@ -315,13 +316,7 @@ int extract_from_SF(char *path, int section, int line)
     pos = section_content;
     do
     {
-        pos = strchr(pos, '\x0A');
 
-        if (pos != NULL)
-        {
-            pos++;
-            nrLines--;
-        }
         if (nrLines == line)
         {
             // printf("Numar de linii %d\n",nrLines);
@@ -342,6 +337,15 @@ int extract_from_SF(char *path, int section, int line)
                 // i++;
             }
         }
+
+        pos = strchr(pos, '\x0A');
+
+        if (pos != NULL)
+        {
+            pos++;
+            nrLines--;
+        }
+        
         if(nrLines < line)
             break;
     } while (pos != NULL && nrLines > 0);
