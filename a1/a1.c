@@ -154,10 +154,8 @@ int parse_SF_file(char *path)
     if (read(fd, &magic, 1) != 1 || magic != 'd')
     {
         printf("ERROR\nwrong magic\n");
-        // printf("ERROR\nwrong magic\n%c %d\n",magic,magic);
         return -1;
     }
-    // printf("%c====%d\n",magic,magic);
 
     lseek(fd, -3, SEEK_END);
     read(fd, &header_size, 2);
@@ -213,16 +211,22 @@ int parse_SF_file(char *path)
 
 int extract_from_SF(char *path, int section, int line)
 {
-    off_t fd=0;
+    off_t fd = 0;
     fd = open(path, O_RDONLY);
+    if (fd == -1)
+    {
+        printf("ERROR\ninvalid file\n");
+        return -1;
+    }
 
     lseek(fd, -1, SEEK_END);
-    char magic=0;
+    char magic = 0;
     int header_size = 0, version = 0, no_of_sections = 0;
 
     if (read(fd, &magic, 1) != 1 || magic != 'd')
     {
         printf("ERROR\ninvalid file\n");
+        close(fd);
         return -1;
     }
 
@@ -235,6 +239,7 @@ int extract_from_SF(char *path, int section, int line)
     if (version < 41 || version > 151)
     {
         printf("ERROR\ninvalid file\n");
+        close(fd);
         return -1;
     }
 
@@ -242,10 +247,17 @@ int extract_from_SF(char *path, int section, int line)
     if (no_of_sections < 5 || no_of_sections > 19)
     {
         printf("ERROR\nwinvalid file\n");
+        close(fd);
         return -1;
     }
 
-    Section_Header sections[no_of_sections+1];
+    if (section > no_of_sections)
+    {
+        printf("ERROR\ninvalid section");
+        close(fd);
+        return -1;
+    }
+    Section_Header sections[no_of_sections + 1];
     for (int i = 1; i <= no_of_sections; i++)
     {
         strcpy(sections[i].sect_name, "");
@@ -258,61 +270,18 @@ int extract_from_SF(char *path, int section, int line)
         read(fd, &(sections[i].sect_type), 2);
         if (sections[i].sect_type != 52 && sections[i].sect_type != 41 && sections[i].sect_type != 89)
         {
-            printf("ERROR\ninvalid section\n");
+            printf("ERROR\ninvalid file\n");
+            close(fd);
             return -1;
         }
         read(fd, &(sections[i].sect_offset), 4);
         read(fd, &(sections[i].sect_size), 4);
     }
 
-
-    // ----------------------------------------------------COD NEEFICIENT, DAR MERGE----------------------------------------
-    // lseek(fd, sections[section].sect_offset, SEEK_SET);
-    // int nrLines = 1;
-    // char c = 0;
-    // for (int i = 0; i < sections[section].sect_size; i++)
-    // {
-    //     if (read(fd, &c, 1) != 1)
-    //     {
-    //         perror("Eroare la citire");
-    //         return -1;
-    //     }
-    //     if (c == '\x0A')
-    //     {
-    //         nrLines++;
-    //     }
-    // }
-    // lseek(fd, sections[section].sect_offset, SEEK_SET);
-    // int startPrinting = 0;
-    //  for (int i = 0; i < sections[section].sect_size; i++)
-    //  {
-    //     if (read(fd, &c, 1) != 1)
-    //     {
-    //         perror("Eroare la citire");
-    //         return -1;
-    //     }
-    //     if (startPrinting == 1)
-    //         printf("%c", c);
-    //     if (c == '\x0A')
-    //     {
-    //         nrLines--;
-    //         if (nrLines == line)
-    //         {
-    //             printf("SUCCESS\n");
-    //             startPrinting = 1;
-    //         }
-    //         else
-    //             startPrinting = 0;
-    //     }
-    // }
-    //-------------------------------------------------------------------------------------------------------------------------
-
-
-    //-------------------------------------------------------------COD EFICIENT BUT DOESNT WORK----------------------------------------------------
-    char *section_content=NULL, *pos=NULL;
+   char *section_content = NULL, *pos = NULL;
 
     int nrLines = 1;
-    char c=0;
+    char c = 0;
     lseek(fd, sections[section].sect_offset, SEEK_SET);
     section_content = (char *)malloc(sizeof(char) * sections[section].sect_size);
     read(fd, section_content, sections[section].sect_size);
@@ -324,55 +293,60 @@ int extract_from_SF(char *path, int section, int line)
         if (pos != NULL)
         {
             pos++;
-            //printf("%c\n",c);
             nrLines++;
         }
 
     } while (pos != NULL);
-   // printf("Numar de linii %d\n",nrLines);
-   // printf("%s\n",section_content);
-    //free(section_content);
-    
-    
+    // printf("Numar de linii %d\n",nrLines);
+    // printf("%s\n",section_content);
+    // free(section_content);
+    if (line > nrLines)
+    {
+        printf("ERROR\ninvalid line\n");
+        free(section_content);
+        close(fd);
+        return -1;
+    }
 
     lseek(fd, sections[section].sect_offset, SEEK_SET);
-   // section_content = (char *)realloc(section_content,sizeof(char) * sections[section].sect_size);
-   // read(fd, section_content, sections[section].sect_size);
-   // lseek(fd, -sections[section].sect_size, SEEK_CUR);--- de ce dumnezo mai faceam astea inca o data
+    // section_content = (char *)realloc(section_content,sizeof(char) * sections[section].sect_size);
+    // read(fd, section_content, sections[section].sect_size);
+    // lseek(fd, -sections[section].sect_size, SEEK_CUR);--- de ce dumnezo mai faceam astea inca o data
     pos = section_content;
-    do{
+    do
+    {
         pos = strchr(pos, '\x0A');
 
         if (pos != NULL)
         {
             pos++;
             nrLines--;
-            
         }
         if (nrLines == line)
         {
-           // printf("Numar de linii %d\n",nrLines);
+            // printf("Numar de linii %d\n",nrLines);
             printf("SUCCESS\n");
             c = 0;
-            //int i=0;
-            lseek(fd, pos-section_content, SEEK_CUR);
+            // int i=0;
+            lseek(fd, pos - section_content, SEEK_CUR);
             while (c != '\x0A')
-            //while(i <= sections[section-1].sect_size)
+            // while(i <= sections[section-1].sect_size)
             {
                 if (read(fd, &c, 1) != 1)
                 {
                     perror("Eroare la citire");
+                    free(section_content);
                     return -1;
                 }
                 printf("%c", c);
-                //i++;
+                // i++;
             }
-       }
-   } while (pos != NULL);
+        }
+        if(nrLines < line)
+            break;
+    } while (pos != NULL && nrLines > 0);
 
     free(section_content);
-
-//-----------------------------------------------------------------------------------------------------------------------------
 
     close(fd);
     return -1;
@@ -388,13 +362,8 @@ int SF(char *path)
 
     if (read(fd, &magic, 1) != 1 || magic != 'd')
     {
-        // printf("SSSSSGANGAEBGUABGUBAHFBAHUBFUHIABFBUHABFUABFB\n%s\n\n\n\n",path);
         return -1;
     }
-    // printf("%c--%d\n\n",magic,magic);
-    // printf("SIUU/%s\n",path);
-    // if(strcmp(path,"./test_root/VsJ7I7/3wRUUnYDx4/qpaWgg0SRp/vsIo3cmD/qQBAm2HxR/lLuDR0Jrn.pEo")==0)
-    // parse_SF_file(path);
     lseek(fd, -3, SEEK_END);
     read(fd, &header_size, 2);
 
@@ -433,6 +402,7 @@ int SF(char *path)
     }
 
     int nrLines;
+
     // char c = 0;
     // for (int section = 0; section < no_of_sections; section++)
     // {
@@ -440,7 +410,6 @@ int SF(char *path)
     //     lseek(fd, sections[section].sect_offset, SEEK_SET);
     //     for (int i = 0; i < sections[section].sect_size; i++)
     //     {
-
     //         read(fd, &c, 1);
     //         if (c == '\x0A')
     //         {
@@ -468,7 +437,6 @@ int SF(char *path)
             if (c != NULL)
             {
                 c++;
-                // printf("%s\n",c);
                 nrLines++;
             }
             if (nrLines > 16)
@@ -510,7 +478,6 @@ int findall_SF(char *path)
             snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
             // if (lstat(fullPath, &statbuf) == 0)
             // {
-
             //     if (S_ISDIR(statbuf.st_mode))
             //     {
             //         findall_SF(fullPath);
@@ -520,7 +487,6 @@ int findall_SF(char *path)
             //         if (SF(fullPath) == 1)
             //             printf("%s\n", fullPath + 2);
             //     }
-
             // }
 
             lstat(fullPath, &statbuf);
@@ -606,7 +572,7 @@ int main(int argc, char **argv)
                 {
                     findall = 1;
                 }
-                //free(name_filtration);
+                // free(name_filtration);
                 free(temp_argv);
             }
         }
@@ -641,17 +607,6 @@ int main(int argc, char **argv)
     {
         findall_SF(path);
     }
-
-    // char string[]={"/home/test/sample"};
-    // char* pos=strchr(string,'/');
-
-    // while(pos!=NULL)
-    // {
-    //     pos = pos+1;
-    //     pos=strchr(pos,'/');
-
-    //     printf("SIuuuu\n");
-    // }
 
     free(path);
     free(name_starts_with);

@@ -810,7 +810,7 @@ def main():
         logFile.write(res)
         logFile.close()
         dh.copyCompileLogFileInCurrentDirectory()
-        dh.removeContainer()
+        #dh.removeContainer()
         print(res)
     else:
         if "valgrind" in args:
