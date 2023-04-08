@@ -298,9 +298,6 @@ int extract_from_SF(char *path, int section, int line)
         }
 
     } while (pos != NULL);
-    //printf("Numar de linii %d\n",nrLines);
-    //printf("%s\n",section_content);
-    // free(section_content);
     if (line > nrLines)
     {
         printf("ERROR\ninvalid line\n");
@@ -310,22 +307,20 @@ int extract_from_SF(char *path, int section, int line)
     }
 
     lseek(fd, sections[section].sect_offset, SEEK_SET);
-    // section_content = (char *)realloc(section_content,sizeof(char) * sections[section].sect_size);
-    // read(fd, section_content, sections[section].sect_size);
-    // lseek(fd, -sections[section].sect_size, SEEK_CUR);--- de ce dumnezo mai faceam astea inca o data
+
     pos = section_content;
     do
     {
 
         if (nrLines == line)
         {
-            // printf("Numar de linii %d\n",nrLines);
+
             printf("SUCCESS\n");
             c = 0;
-            // int i=0;
+     
             lseek(fd, pos - section_content, SEEK_CUR);
             while (c != '\x0A')
-            // while(i <= sections[section-1].sect_size)
+    
             {
                 if (read(fd, &c, 1) != 1)
                 {
@@ -334,7 +329,7 @@ int extract_from_SF(char *path, int section, int line)
                     return -1;
                 }
                 printf("%c", c);
-                // i++;
+  
             }
         }
 
@@ -407,25 +402,6 @@ int SF(char *path)
 
     int nrLines;
 
-    // char c = 0;
-    // for (int section = 0; section < no_of_sections; section++)
-    // {
-    //     nrLines = 1;
-    //     lseek(fd, sections[section].sect_offset, SEEK_SET);
-    //     for (int i = 0; i < sections[section].sect_size; i++)
-    //     {
-    //         read(fd, &c, 1);
-    //         if (c == '\x0A')
-    //         {
-    //             nrLines++;
-    //         }
-    //         if (nrLines > 16)
-    //         {
-    //             return 1;
-    //         }
-    //     }
-    // }
-
     char *section_content, *c;
     for (int section = 0; section < no_of_sections; section++)
     {
@@ -450,7 +426,7 @@ int SF(char *path)
             }
 
         } while (c != NULL);
-        // printf("%s\n",section_content);
+
         free(section_content);
     }
     close(fd);
@@ -480,18 +456,6 @@ int findall_SF(char *path)
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
         {
             snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
-            // if (lstat(fullPath, &statbuf) == 0)
-            // {
-            //     if (S_ISDIR(statbuf.st_mode))
-            //     {
-            //         findall_SF(fullPath);
-            //     }
-            //     else
-            //     {
-            //         if (SF(fullPath) == 1)
-            //             printf("%s\n", fullPath + 2);
-            //     }
-            // }
 
             lstat(fullPath, &statbuf);
             if (!S_ISDIR(statbuf.st_mode))
@@ -540,17 +504,16 @@ int main(int argc, char **argv)
                 if (strcmp(name_filtration, "path") == 0)
                 {
                     path = (char *)malloc(sizeof(char) * (3 + strlen(argv[i] + 5)));
-                    // path="./";
+
                     strcpy(path, "./");
-                    // printf("%s\n", path);
+
                     strcat(path, argv[i] + 5);
-                    // path = argv[i] + 5;
-                    // printf("%s\n", path);
+
                 }
                 if (strcmp(name_filtration, "name_starts_with") == 0)
                 {
-                    name_starts_with = (char *)malloc(sizeof(char) * (3 + strlen(argv[i] + 17))); // +17 ca sa ajunga fix dupa egal
-                    strcpy(name_starts_with, argv[i] + 17);                                       // pozitia de unde incepe numele cautat
+                    name_starts_with = (char *)malloc(sizeof(char) * (3 + strlen(argv[i] + 17))); 
+                    strcpy(name_starts_with, argv[i] + 17);                                       
                 }
                 if (strcmp(argv[i], "has_perm_execute") == 0)
                 {
@@ -576,7 +539,7 @@ int main(int argc, char **argv)
                 {
                     findall = 1;
                 }
-                // free(name_filtration);
+
                 free(temp_argv);
             }
         }
@@ -588,7 +551,6 @@ int main(int argc, char **argv)
         {
             printf("ERROR");
             perror("invalid directory path");
-            // perror("ERROR\ninvalid directory path\n");//------------------try this later
         }
     }
     else if (list == 1)
