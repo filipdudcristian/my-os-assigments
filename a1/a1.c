@@ -115,7 +115,7 @@ int list_recursiv(char *path, char *name_starts_with, int has_perm_execute)
                             }
                         }
                         else
-                            printf("%s\n", fullPath + 2);
+                            printf("%s\n", fullPath + 2);_
                     }
                 }
                 else
@@ -350,6 +350,7 @@ int extract_from_SF(char *path, int section, int line)
     close(fd);
     return -1;
 }
+
 int SF(char *path)
 {
     off_t fd;
@@ -432,6 +433,8 @@ int SF(char *path)
     close(fd);
     return -1;
 }
+
+
 
 int findall_SF(char *path)
 {
