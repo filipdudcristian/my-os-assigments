@@ -20,105 +20,109 @@ typedef struct
 
 int nrThreads = 0;
 
-sem_t *semPb5_1, *semPb5_2, *sem15, *semstop;
-int x = 0;
+sem_t *semPb2_1, *semPb2_2, *semPb3, *semPb4_1, *semPb4_2, *sem13, *semCount;
+int count = 0;
 
 void *thread_function_pb2(void *arg)
 {
     TH_STRUCT *thread = (TH_STRUCT *)arg;
 
-    if (thread->tid == 4)
-        pthread_cond_wait(thread->cond, thread->lock);
+
+    if (thread->pid == 2 && thread->tid == 4)
+        sem_wait(semPb2_1);
+
+    if (thread->pid == 2 && thread->tid == 3)
+        sem_wait(semPb4_1);
+       
+
+    if (thread->pid == 8 && thread->tid == 6)
+        sem_wait(semPb4_2);    
 
     info(BEGIN, thread->pid, thread->tid);
 
-    if (thread->tid == 1)
+    if (thread->pid == 2 && thread->tid == 1)
     {
-        pthread_cond_signal(thread->cond);
-        pthread_join(thread->threads[4], NULL);
+        sem_post(semPb2_1);
+        sem_wait(semPb2_2);
     }
 
     info(END, thread->pid, thread->tid);
+
+    if (thread->pid == 2 && thread->tid == 4)
+        sem_post(semPb2_2);
+
+    ////////////////////////////////////////////////////
+    if (thread->pid == 8 && thread->tid == 3)
+        sem_post(semPb4_1);
+
+
+    if (thread->pid == 2 && thread->tid == 3)
+        sem_post(semPb4_2);
+
 
     return NULL;
 }
 
 void *thread_function_pb3(void *arg)
 {
-    // TH_STRUCT *thread = (TH_STRUCT *)arg;
+    TH_STRUCT *thread = (TH_STRUCT *)arg;
 
-    // if (contor >= 4)
-    //     pthread_cond_wait(thread->cond, thread->lock);
+    sem_wait(semPb3);
+    info(BEGIN, thread->pid, thread->tid);
 
-    // info(BEGIN, thread->pid, thread->tid);
-    // contor++;
+    if (thread->tid == 13)
+    {
+        sem_wait(sem13);
+    }
 
-    // info(END, thread->pid, thread->tid);
+    pthread_mutex_lock(thread->lock);
 
-    TH_STRUCT* th_p = (TH_STRUCT*)arg;
+    if (count < 3 && thread->tid != 13)
+    {
+        count++;
+        pthread_mutex_unlock(thread->lock);
+        sem_wait(semCount);
+    }
+    pthread_mutex_unlock(thread->lock);
 
-    // if (th_p->tid == 15)
-	// {
-	// 	sem_wait(sem15);
-	// }
+    if (count == 3)
+        sem_post(sem13);
 
-	pthread_mutex_lock(th_p->lock);
-	x++;
-	while (x > 4)
-        pthread_cond_wait(th_p->cond, th_p->lock);
-	if(x < 4){ //&& th_p->tid != 13){
-		
-		//sem_wait(semPb5_1);
-		info(BEGIN, th_p->pid, th_p->tid);
-        x--;
-        pthread_cond_signal(th_p->cond);
-		info(END, th_p->pid, th_p->tid);
-		//sem_post(semPb5_1);
-	}
-
-    pthread_mutex_unlock(th_p->lock);
-	// else
-	// {
-		
-	// 	sem_wait(semPb5_1);
-	// 	info(BEGIN, th_p->pid, th_p->tid);
-	// 	if (x==40)
-	// 	{
-	// 		sem_post(sem15);
-	// 	}
-	// 	pthread_mutex_unlock(th_p->lock);
-	// 	if (th_p->tid != 13)
-	// 	{
-	// 		sem_wait(sem);
-	// 		info(END, th_p->pid, th_p->tid);
-	// 		sem_post(semPb5_1);
-	// 	}
-	// 	else
-	// 	{
-	// 		info(END, th_p->pid, th_p->tid);
-	// 		sem_post(semPb5_1);
-	// 		sem_post(semstop);
-	// 		sem_post(semstop);
-	// 		sem_post(semstop);
-	// 		sem_post(semstop);
-	// 	}
-	// }
-
+    if (thread->tid == 13)
+    {
+        info(END, thread->pid, thread->tid);
+        sem_post(semPb3);
+        sem_post(semCount);
+        sem_post(semCount);
+        sem_post(semCount);
+    }
+    else
+    {
+        info(END, thread->pid, thread->tid);
+        sem_post(semPb3);
+    }
     return NULL;
 }
-
-
-
-
 
 int main()
 {
     init();
+    sem_unlink("semPb3");
+    sem_unlink("semPb4_1");
+    sem_unlink("semPb4_2");
+    sem_unlink("semPb5_2");
+    sem_unlink("semPb2_1");
+    sem_unlink("semPb2_2");
+    sem_unlink("sem13");
+    sem_unlink("semstop");
     pid_t pid1 = -1, pid2 = -1, pid3 = -1, pid4 = -1, pid5 = -1, pid6 = -1, pid7 = -1, pid8 = -1;
-    semPb5_1 = sem_open("semPb5_1", O_CREAT, 0644, 0);
-	semPb5_2 = sem_open("semPb5_1", O_CREAT, 0644, 0);
-    sem15 = sem_open("sem15", O_CREAT, 0644, 0);
-	semstop = sem_open("semstop", O_CREAT, 0644, 0);
+    semPb3 = sem_open("semPb3", O_CREAT, 0644, 4);
+    semPb4_1 = sem_open("semPb4_1", O_CREAT, 0644, 0);
+    semPb4_2 = sem_open("semPb4_2", O_CREAT, 0644, 0);
+    semPb2_1 = sem_open("semPb2_1", O_CREAT, 0644, 0);
+    semPb2_2 = sem_open("semPb2_2", O_CREAT, 0644, 0);
+    sem13 = sem_open("sem13", O_CREAT, 0644, 0);
+    semCount = sem_open("semCount", O_CREAT, 0644, 0);
 
     info(BEGIN, 1, 0);
     pid1 = getpid();
@@ -260,7 +264,7 @@ int main()
                 pthread_create(&threads[i], NULL, thread_function_pb2, &params[i]);
             }
 
-            for (int i = 1; i <= 7; i++)
+            for (int i = 1; i <= 6; i++)
             {
                 pthread_join(threads[i], NULL);
             }
