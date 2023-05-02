@@ -19,24 +19,25 @@ typedef struct
 } TH_STRUCT;
 
 int nrThreads = 0;
+int found = 0;
+int ended = 0;
 
 sem_t *semPb2_1, *semPb2_2, *semPb3, *semPb4_1, *semPb4_2, *sem13, *semCount;
 int count = 0;
+int startedThreads = 0;
 
 void *thread_function_pb2(void *arg)
 {
     TH_STRUCT *thread = (TH_STRUCT *)arg;
-
 
     if (thread->pid == 2 && thread->tid == 4)
         sem_wait(semPb2_1);
 
     if (thread->pid == 2 && thread->tid == 3)
         sem_wait(semPb4_1);
-       
 
     if (thread->pid == 8 && thread->tid == 6)
-        sem_wait(semPb4_2);    
+        sem_wait(semPb4_2);
 
     info(BEGIN, thread->pid, thread->tid);
 
@@ -55,10 +56,8 @@ void *thread_function_pb2(void *arg)
     if (thread->pid == 8 && thread->tid == 3)
         sem_post(semPb4_1);
 
-
     if (thread->pid == 2 && thread->tid == 3)
         sem_post(semPb4_2);
-
 
     return NULL;
 }
@@ -67,41 +66,126 @@ void *thread_function_pb3(void *arg)
 {
     TH_STRUCT *thread = (TH_STRUCT *)arg;
 
-    sem_wait(semPb3);
-    info(BEGIN, thread->pid, thread->tid);
-
     if (thread->tid == 13)
     {
         sem_wait(sem13);
     }
 
-    pthread_mutex_lock(thread->lock);
+    // sem_wait(semPb3);
 
-    if (count < 3 && thread->tid != 13)
-    {
-        count++;
-        pthread_mutex_unlock(thread->lock);
-        sem_wait(semCount);
-    }
+    pthread_mutex_lock(thread->lock);
+    startedThreads++;
     pthread_mutex_unlock(thread->lock);
 
-    if (count == 3)
-        sem_post(sem13);
-
-    if (thread->tid == 13)
+    if (startedThreads >= 37 && thread->tid != 13)
     {
+       
+        sem_wait(semPb3);
+        //pthread_mutex_lock(thread->lock);
+        info(BEGIN, thread->pid, thread->tid);
+        if (startedThreads == 39)
+        {
+            sem_post(sem13);
+        }
+        //sem_post(semPb3);
+         //pthread_mutex_unlock(thread->lock);
+
+        sem_wait(semCount);
         info(END, thread->pid, thread->tid);
         sem_post(semPb3);
-        sem_post(semCount);
-        sem_post(semCount);
-        sem_post(semCount);
     }
     else
     {
-        info(END, thread->pid, thread->tid);
-        sem_post(semPb3);
+        sem_wait(semPb3);
+        info(BEGIN, thread->pid, thread->tid);
+
+        //pthread_mutex_unlock(thread->lock);
+
+        if (thread->tid != 13)
+        {
+
+            info(END, thread->pid, thread->tid);
+            sem_post(semPb3);
+        }
+        else
+        if (thread->tid == 13)
+        {
+            info(END, thread->pid, thread->tid);
+            sem_post(semPb3);
+            sem_post(semCount);
+            sem_post(semCount);
+            sem_post(semCount);
+        }
     }
+
+    // pthread_mutex_lock(thread->lock);
+    // if (count < 3 && thread->tid != 13)
+    // {
+    //     count++;
+    //     if (count == 3)
+    //     {
+    //         sem_post(sem13);
+    //     }
+    //     pthread_mutex_unlock(thread->lock);
+    //     sem_post(semPb3);
+    //     sem_wait(semCount);
+    // }
+    // pthread_mutex_unlock(thread->lock);
+
+    // info(BEGIN, thread->pid, thread->tid);
+
+    // if (count == 3)
+    //     sem_post(sem13);
+
+    // if (thread->tid == 13)
+    // {
+    //     info(END, thread->pid, thread->tid);
+    //     sem_post(semPb3);
+    //     sem_post(semCount);
+    //     sem_post(semCount);
+    //     sem_post(semCount);
+    // }
     return NULL;
+
+    // if (startedThreads >= 38 && found == 1 && ended == 0)
+    // {
+    //     sem_post(semPb3);
+    //     sem_wait(semCount);
+    // }
+    // pthread_mutex_lock(thread->lock);
+    // if (count < 3 && thread->tid != 13)
+    // {
+    //     count++;
+    //     if (count == 3)
+    //     {
+    //         sem_post(sem13);
+    //     }
+    //     pthread_mutex_unlock(thread->lock);
+    //     sem_post(semPb3);
+    //     sem_wait(semCount);
+    // }
+    // pthread_mutex_unlock(thread->lock);
+
+    // info(BEGIN, thread->pid, thread->tid);
+
+    // if (count == 3)
+    //     sem_post(sem13);
+
+    // if (thread->tid == 13)
+    // {
+    //     info(END, thread->pid, thread->tid);
+    //     ended = 1;
+    //     sem_post(semPb3);
+    //     sem_post(semCount);
+    //     sem_post(semCount);
+    //     sem_post(semCount);
+    // }
+    // else
+    // {
+    //     info(END, thread->pid, thread->tid);
+    //     sem_post(semPb3);
+    // }
+    // return NULL;
 }
 
 int main()
