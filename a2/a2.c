@@ -71,125 +71,50 @@ void *thread_function_pb3(void *arg)
         sem_wait(sem13);
     }
 
-    // sem_wait(semPb3);
-
     pthread_mutex_lock(thread->lock);
     startedThreads++;
     pthread_mutex_unlock(thread->lock);
 
     if (startedThreads >= 37 && thread->tid != 13)
     {
-       
+
         sem_wait(semPb3);
-        //pthread_mutex_lock(thread->lock);
         info(BEGIN, thread->pid, thread->tid);
         if (startedThreads == 39)
         {
             sem_post(sem13);
         }
-        //sem_post(semPb3);
-         //pthread_mutex_unlock(thread->lock);
 
         sem_wait(semCount);
         info(END, thread->pid, thread->tid);
-        sem_post(semPb3);
+        // sem_post(semPb3);
     }
     else
     {
         sem_wait(semPb3);
         info(BEGIN, thread->pid, thread->tid);
 
-        //pthread_mutex_unlock(thread->lock);
-
         if (thread->tid != 13)
         {
 
             info(END, thread->pid, thread->tid);
-            sem_post(semPb3);
+            // sem_post(semPb3);
         }
-        else
-        if (thread->tid == 13)
+        else if (thread->tid == 13)
         {
             info(END, thread->pid, thread->tid);
-            sem_post(semPb3);
-            sem_post(semCount);
-            sem_post(semCount);
-            sem_post(semCount);
+            // sem_post(semPb3);
+            for (int i = 0; i < 3; i++)
+                sem_post(semCount);
         }
     }
-
-    // pthread_mutex_lock(thread->lock);
-    // if (count < 3 && thread->tid != 13)
-    // {
-    //     count++;
-    //     if (count == 3)
-    //     {
-    //         sem_post(sem13);
-    //     }
-    //     pthread_mutex_unlock(thread->lock);
-    //     sem_post(semPb3);
-    //     sem_wait(semCount);
-    // }
-    // pthread_mutex_unlock(thread->lock);
-
-    // info(BEGIN, thread->pid, thread->tid);
-
-    // if (count == 3)
-    //     sem_post(sem13);
-
-    // if (thread->tid == 13)
-    // {
-    //     info(END, thread->pid, thread->tid);
-    //     sem_post(semPb3);
-    //     sem_post(semCount);
-    //     sem_post(semCount);
-    //     sem_post(semCount);
-    // }
+    sem_post(semPb3);
     return NULL;
-
-    // if (startedThreads >= 38 && found == 1 && ended == 0)
-    // {
-    //     sem_post(semPb3);
-    //     sem_wait(semCount);
-    // }
-    // pthread_mutex_lock(thread->lock);
-    // if (count < 3 && thread->tid != 13)
-    // {
-    //     count++;
-    //     if (count == 3)
-    //     {
-    //         sem_post(sem13);
-    //     }
-    //     pthread_mutex_unlock(thread->lock);
-    //     sem_post(semPb3);
-    //     sem_wait(semCount);
-    // }
-    // pthread_mutex_unlock(thread->lock);
-
-    // info(BEGIN, thread->pid, thread->tid);
-
-    // if (count == 3)
-    //     sem_post(sem13);
-
-    // if (thread->tid == 13)
-    // {
-    //     info(END, thread->pid, thread->tid);
-    //     ended = 1;
-    //     sem_post(semPb3);
-    //     sem_post(semCount);
-    //     sem_post(semCount);
-    //     sem_post(semCount);
-    // }
-    // else
-    // {
-    //     info(END, thread->pid, thread->tid);
-    //     sem_post(semPb3);
-    // }
-    // return NULL;
 }
 
 int main()
 {
+
     init();
     sem_unlink("semPb3");
     sem_unlink("semPb4_1");
@@ -199,7 +124,7 @@ int main()
     sem_unlink("semPb2_2");
     sem_unlink("sem13");
     sem_unlink("semstop");
-    pid_t pid1 = -1, pid2 = -1, pid3 = -1, pid4 = -1, pid5 = -1, pid6 = -1, pid7 = -1, pid8 = -1;
+    
     semPb3 = sem_open("semPb3", O_CREAT, 0644, 4);
     semPb4_1 = sem_open("semPb4_1", O_CREAT, 0644, 0);
     semPb4_2 = sem_open("semPb4_2", O_CREAT, 0644, 0);
@@ -208,8 +133,9 @@ int main()
     sem13 = sem_open("sem13", O_CREAT, 0644, 0);
     semCount = sem_open("semCount", O_CREAT, 0644, 0);
 
+    pid_t pid2 = -1, pid3 = -1, pid4 = -1, pid5 = -1, pid6 = -1, pid7 = -1, pid8 = -1;
+
     info(BEGIN, 1, 0);
-    pid1 = getpid();
     pid2 = fork();
     if (pid2 == 0)
     {
@@ -300,64 +226,58 @@ int main()
         exit(2);
     }
 
-    if (getpid() == pid1)
+    pid3 = fork();
+    if (pid3 == 0)
     {
-        pid3 = fork();
-        if (pid3 == 0)
+        info(BEGIN, 3, 0);
+
+        pid7 = fork();
+        if (pid7 == 0)
         {
-            info(BEGIN, 3, 0);
+            info(BEGIN, 7, 0);
 
-            pid7 = fork();
-            if (pid7 == 0)
-            {
-                info(BEGIN, 7, 0);
-
-                info(END, 7, 0);
-                exit(7);
-            }
-
-            waitpid(pid7, NULL, 0);
-            info(END, 3, 0);
-            exit(3);
+            info(END, 7, 0);
+            exit(7);
         }
+
+        waitpid(pid7, NULL, 0);
+        info(END, 3, 0);
+        exit(3);
     }
 
-    if (getpid() == pid1)
+    pid8 = fork();
+    if (pid8 == 0)
     {
-        pid8 = fork();
-        if (pid8 == 0)
+        info(BEGIN, 8, 0);
+
+        info(END, 8, 0);
+
+        pthread_t threads[7];
+        TH_STRUCT params[7];
+
+        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+        pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+        for (int i = 1; i <= 6; i++)
         {
-            info(BEGIN, 8, 0);
+            params[i].pid = 8;
+            params[i].tid = i;
+            params[i].lock = &lock;
+            params[i].cond = &cond;
+            params[i].threads = threads;
 
-            info(END, 8, 0);
-
-            pthread_t threads[7];
-            TH_STRUCT params[7];
-
-            pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-            pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
-            for (int i = 1; i <= 6; i++)
-            {
-                params[i].pid = 8;
-                params[i].tid = i;
-                params[i].lock = &lock;
-                params[i].cond = &cond;
-                params[i].threads = threads;
-
-                pthread_create(&threads[i], NULL, thread_function_pb2, &params[i]);
-            }
-
-            for (int i = 1; i <= 6; i++)
-            {
-                pthread_join(threads[i], NULL);
-            }
-
-            pthread_mutex_destroy(&lock);
-            pthread_cond_destroy(&cond);
-
-            exit(8);
+            pthread_create(&threads[i], NULL, thread_function_pb2, &params[i]);
         }
+
+        for (int i = 1; i <= 6; i++)
+        {
+            pthread_join(threads[i], NULL);
+        }
+
+        pthread_mutex_destroy(&lock);
+        pthread_cond_destroy(&cond);
+
+        exit(8);
     }
 
     waitpid(pid2, NULL, 0);
