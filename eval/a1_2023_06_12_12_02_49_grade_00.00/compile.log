@@ -1,0 +1,15 @@
+a1.c: In function 'list_recursiv':
+a1.c:117:25: warning: this 'else' clause does not guard... [-Wmisleading-indentation]
+  117 |                         else
+      |                         ^~~~
+a1.c:118:58: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'else'
+  118 |                             printf("%s\n", fullPath + 2);_
+      |                                                          ^
+a1.c:118:58: error: '_' undeclared (first use in this function)
+a1.c:118:58: note: each undeclared identifier is reported only once for each function it appears in
+a1.c:118:59: error: expected ';' before '}' token
+  118 |                             printf("%s\n", fullPath + 2);_
+      |                                                           ^
+      |                                                           ;
+  119 |                     }
+      |                     ~                                      
